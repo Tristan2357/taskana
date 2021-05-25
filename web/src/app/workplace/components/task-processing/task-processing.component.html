@@ -6,24 +6,29 @@
     <div class="task-processing__action-buttons">
 
       <!-- TRANSFER TASK -->
-      <button mat-stroked-button class="task-processing__button--secondary" [matMenuTriggerFor]="menu" matTooltip="Transfer Task to another Workbasket">
+      <button mat-stroked-button class="task-processing__button--secondary"
+              [matMenuTriggerFor]="menu" matTooltip="Transfer Task to another Workbasket">
         Transfer Task
         <mat-icon class="task-processing__icon--aquamarine">transfer_within_a_station</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
-        <button mat-menu-item *ngFor="let workbasket of workbaskets" (click)="transferTask(workbasket)">
+        <button mat-menu-item *ngFor="let workbasket of workbaskets"
+                (click)="transferTask(workbasket)">
           {{workbasket.name}}
         </button>
       </mat-menu>
 
       <!-- COMPLETE TASK -->
-      <button mat-stroked-button class="task-processing__button--secondary" matTooltip="Complete Task and return to Task list" (click)="completeTask()">
+      <button mat-stroked-button class="task-processing__button--secondary"
+              matTooltip="Complete Task and return to Task list" (click)="completeTask()">
         <span> Complete Task </span>
         <mat-icon class="task-processing__icon--aquamarine">check</mat-icon>
       </button>
 
       <!-- CANCEL CLAIM -->
-      <button mat-stroked-button class="task-processing__button--secondary" matTooltip="Cancel Task claim and return to Task overview" (click)="cancelClaimTask()">
+      <button mat-stroked-button class="task-processing__button--secondary"
+              matTooltip="Cancel Task claim and return to Task overview"
+              (click)="cancelClaimTask()">
         <span> Cancel claim </span>
         <mat-icon class="task-processing__icon--aquamarine">clear</mat-icon>
       </button>
@@ -34,13 +39,14 @@
 
   </div>
 
-  <div class="task-processing__information"> </div>
+  <div class="task-processing__information"></div>
 
-  <mat-divider> </mat-divider>
+  <mat-divider></mat-divider>
 
 
   <!-- CONTENT -->
   <iframe *ngIf="link" [src]="link"></iframe>
 
+  <div *ngIf="formHtml" [innerHTML]="formHtml"></div>
 </div>
 

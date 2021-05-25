@@ -1,14 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Task } from 'app/workplace/models/task';
+import { CustomAttribute, Task } from 'app/workplace/models/task';
 import { Workbasket } from 'app/shared/models/workbasket';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { TaskService } from 'app/workplace/services/task.service';
 import { WorkbasketService } from 'app/shared/services/workbasket/workbasket.service';
 import { Subscription } from 'rxjs';
 import { ClassificationsService } from 'app/shared/services/classifications/classifications.service';
 import { take } from 'rxjs/operators';
 import { RequestInProgressService } from '../../../shared/services/request-in-progress/request-in-progress.service';
+import { GenericHttpService } from '../../../shared/services/generic-http/generic-http.service';
 
 @Component({
   selector: 'taskana-task-processing',
@@ -25,6 +26,9 @@ export class TaskProcessingComponent implements OnInit, OnDestroy {
   task: Task = null;
   workbaskets: Workbasket[];
 
+  @ViewChild('formParent') formParent: ElementRef;
+  formHtml: SafeHtml;
+
   constructor(
     private taskService: TaskService,
     private workbasketService: WorkbasketService,
@@ -32,23 +36,25 @@ export class TaskProcessingComponent implements OnInit, OnDestroy {
     private requestInProgressService: RequestInProgressService,
     private route: ActivatedRoute,
     private router: Router,
-    private sanitizer: DomSanitizer
-  ) {}
+    private sanitizer: DomSanitizer,
+    private httpService: GenericHttpService
+  ) {
+  }
 
   ngOnInit() {
     this.routeSubscription = this.route.params.subscribe((params) => {
-      const { id } = params;
+      const {id} = params;
       this.getTask(id);
 
       this.requestInProgressService.setRequestInProgress(true);
       this.taskService
-        .claimTask(id)
-        .pipe(take(1))
-        .subscribe((task) => {
-          this.task = task;
-          this.taskService.publishUpdatedTask(task);
-          this.requestInProgressService.setRequestInProgress(false);
-        });
+      .claimTask(id)
+      .pipe(take(1))
+      .subscribe((task) => {
+        this.task = task;
+        this.taskService.publishUpdatedTask(task);
+        this.requestInProgressService.setRequestInProgress(false);
+      });
     });
   }
 
@@ -57,10 +63,16 @@ export class TaskProcessingComponent implements OnInit, OnDestroy {
     this.task = await this.taskService.getTask(id).toPromise();
     this.taskService.selectTask(this.task);
     const classification = await this.classificationService
-      .getClassification(this.task.classificationSummary.classificationId)
-      .toPromise();
-    this.address = this.extractUrl(classification.applicationEntryPoint) || `${this.address}/?q=${this.task.name}`;
-    this.link = this.sanitizer.bypassSecurityTrustResourceUrl(this.address);
+    .getClassification(this.task.classificationSummary.classificationId)
+    .toPromise();
+    const formUrl = this.getFormUrl();
+    if (formUrl) {
+      this.loadForm(formUrl);
+    } else {
+      this.address = this.extractUrl(classification.applicationEntryPoint)
+        || `${this.address}/?q=${this.task.name}`;
+      this.link = this.sanitizer.bypassSecurityTrustResourceUrl(this.address);
+    }
     this.getWorkbaskets();
     this.requestInProgressService.setRequestInProgress(false);
   }
@@ -100,18 +112,18 @@ export class TaskProcessingComponent implements OnInit, OnDestroy {
   cancelClaimTask() {
     this.requestInProgressService.setRequestInProgress(true);
     this.taskService
-      .cancelClaimTask(this.task.taskId)
-      .pipe(take(1))
-      .subscribe((task) => {
-        this.task = task;
-        this.taskService.publishUpdatedTask(task);
-        this.requestInProgressService.setRequestInProgress(false);
-      });
+    .cancelClaimTask(this.task.taskId)
+    .pipe(take(1))
+    .subscribe((task) => {
+      this.task = task;
+      this.taskService.publishUpdatedTask(task);
+      this.requestInProgressService.setRequestInProgress(false);
+    });
     this.navigateBack();
   }
 
   navigateBack() {
-    this.router.navigate([{ outlets: { detail: `taskdetail/${this.task.taskId}` } }], {
+    this.router.navigate([{outlets: {detail: `taskdetail/${this.task.taskId}`}}], {
       relativeTo: this.route.parent,
       queryParamsHandling: 'merge'
     });
@@ -137,6 +149,28 @@ export class TaskProcessingComponent implements OnInit, OnDestroy {
 
   private getReflectiveProperty(scope: any, property: string) {
     return Reflect.get(scope, property);
+  }
+
+  private getFormUrl(): string {
+    const callbackInfo = this.task.callbackInfo;
+    let formUrl = '';
+    callbackInfo.forEach((callback: CustomAttribute) => {
+      if (callback.key === 'system_url') {
+        formUrl = callback.value + formUrl;
+      }
+      if (callback.key === 'form_identifier') {
+        formUrl = formUrl + callback.value;
+      }
+    })
+    return formUrl;
+  }
+
+  private loadForm(formUrl: string) {
+    this.httpService.getNonJson(formUrl).pipe(take(1)).subscribe(formHtml => {
+      console.log(formHtml);
+      this.formHtml = this.sanitizer.bypassSecurityTrustHtml(formHtml);
+      console.log(formHtml)
+    })
   }
 
   ngOnDestroy(): void {

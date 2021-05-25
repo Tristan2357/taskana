@@ -30,9 +30,9 @@ export class HttpClientInterceptor implements HttpInterceptor {
           ) {
             // ignore this error
           } else if (
-            (error.status === 409 && error.error.exception.endsWith('WorkbasketAccessItemAlreadyExistException')) ||
+            error.status === 409 && error?.error?.exception && (error.error.exception.endsWith('WorkbasketAccessItemAlreadyExistException') ||
             error.error.exception.endsWith('WorkbasketAlreadyExistException') ||
-            error.error.exception.endsWith('ClassificationAlreadyExistException')
+            error.error.exception.endsWith('ClassificationAlreadyExistException'))
           ) {
             return;
           } else {
