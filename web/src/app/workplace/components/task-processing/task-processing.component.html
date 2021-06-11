@@ -47,6 +47,6 @@
   <!-- CONTENT -->
   <iframe *ngIf="link" [src]="link"></iframe>
 
-  <div *ngIf="formHtml" [innerHTML]="formHtml"></div>
+  <div *ngIf="formHtml" [innerHTML]="formHtml" #formParent></div>
 </div>
 
