@@ -2,6 +2,7 @@ package pro.taskana.common.rest;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import pro.taskana.common.api.BaseQuery;
@@ -12,12 +13,14 @@ public interface QueryParameter<Q extends BaseQuery<?, ?>, R> {
   R applyToQuery(Q query);
 
   default String[] wrapElementsInLikeStatement(String[] list) {
-    if (list != null) {
+    return Arrays.stream(list).map(item -> "%" + item + "%").toArray(String[]::new);
+    // TODO please find this in the review and tell me why/if this does not work
+    /*if (list != null) {
       for (int i = 0; i < list.length; i++) {
         list[i] = "%" + list[i] + "%";
       }
     }
-    return list;
+    return list;*/
   }
 
   default TimeInterval[] extractTimeIntervals(Instant[] instants) {
