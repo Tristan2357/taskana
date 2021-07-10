@@ -22,10 +22,6 @@ import pro.taskana.spi.history.api.events.task.TaskHistoryEventType;
 /** Test for Task History queries. */
 class QueryTaskHistoryAccTest extends AbstractAccTest {
 
-  public QueryTaskHistoryAccTest() {
-    super();
-  }
-
   @Test
   void should_ConfirmEquality_When_UsingListValuesAscendingAndDescending() {
     List<String> defaultList =

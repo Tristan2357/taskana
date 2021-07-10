@@ -77,20 +77,10 @@ public interface BaseQuery<T, U extends Enum<U> & QueryColumnName> {
   long count();
 
   default String[] toUpperCopy(String... source) {
-    return Arrays.stream(source).map(String::toUpperCase).toArray(String[]::new);
-    // TODO please find this in the review and tell me why/if this does not work
-    /*if (source == null || source.length == 0) {
-      // we are currently aware that this is a code smell. Unfortunately the resolution of this
-      // would cause havoc in our queries, since we do not have a concept
-      // for a user input validation yet. As soon as that is done we can resolve this code smell.
+    if (source == null || source.length == 0) {
       return null;
-    } else {
-      String[] target = new String[source.length];
-      for (int i = 0; i < source.length; i++) {
-        target[i] = source[i].toUpperCase();
-      }
-      return target;
-    }*/
+    }
+    return Arrays.stream(source).map(String::toUpperCase).toArray(String[]::new);
   }
 
   /** Determines the sort direction. */

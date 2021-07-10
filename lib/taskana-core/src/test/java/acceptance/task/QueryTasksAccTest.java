@@ -273,7 +273,7 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @TestFactory
-  Stream<DynamicTest> testQueryForCustomX() {
+  Stream<DynamicTest> should_ReturnCorrectResults_When_QueryingForCustomXLikeInAndNotIn() {
     List<Triplet<TaskCustomField, String[], Integer>> list =
         List.of(
             Triplet.of(TaskCustomField.CUSTOM_1, new String[] {"custom%", "p%", "%xyz%", "efg"}, 3),
@@ -306,11 +306,11 @@ class QueryTasksAccTest extends AbstractAccTest {
         TASK_SERVICE.createTaskQuery().customAttributeLike(customField, searchArguments).list();
     assertThat(results).hasSize(expectedResult);
 
-    String[] ids =
+    String[] customAttributes =
         results.stream().map(t -> t.getCustomAttribute(customField)).toArray(String[]::new);
 
     List<TaskSummary> result2 =
-        TASK_SERVICE.createTaskQuery().customAttributeIn(customField, ids).list();
+        TASK_SERVICE.createTaskQuery().customAttributeIn(customField, customAttributes).list();
     assertThat(result2).hasSize(expectedResult);
   }
 
@@ -573,7 +573,7 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @Test
-  void testQueryForOrderByCreatorDesc() {
+  void should_ReturnOrderedResult_When_OrderByCreatorDescIsSet() {
     List<TaskSummary> results = TASK_SERVICE.createTaskQuery().orderByCreator(DESCENDING).list();
 
     assertThat(results)
@@ -584,7 +584,7 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @Test
-  void testQueryForOrderByWorkbasketIdDesc() {
+  void should_ReturnOrderedResult_When_OrderByWorkbasketIdDescIsSet() {
     List<TaskSummary> results =
         TASK_SERVICE.createTaskQuery().orderByWorkbasketId(DESCENDING).list();
 
@@ -597,26 +597,27 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @TestFactory
-  Stream<DynamicTest> testQueryForOrderByCustomXAsc() {
+  Stream<DynamicTest> should_ReturnOrderedResult_When_OrderByCustomXAscIsSet() {
     Iterator<TaskCustomField> iterator = Arrays.stream(TaskCustomField.values()).iterator();
     return DynamicTest.stream(
         iterator,
         s -> String.format("order by %s asc", s),
-        s -> testQueryForOrderByCustomX(s, ASCENDING));
+        s -> should_ReturnOrderedResult_When_OrderByCustomFieldInSortDirectionIsSet(s, ASCENDING));
   }
 
   @WithAccessId(user = "admin")
   @TestFactory
-  Stream<DynamicTest> testQueryForOrderByCustomXDesc() {
+  Stream<DynamicTest> should_ReturnOrderedResult_When_OrderByCustomXDescIsSet() {
     Iterator<TaskCustomField> iterator = Arrays.stream(TaskCustomField.values()).iterator();
 
     return DynamicTest.stream(
         iterator,
         s -> String.format("order by %s desc", s),
-        s -> testQueryForOrderByCustomX(s, DESCENDING));
+        s -> should_ReturnOrderedResult_When_OrderByCustomFieldInSortDirectionIsSet(s, DESCENDING));
   }
 
-  void testQueryForOrderByCustomX(TaskCustomField customField, SortDirection sortDirection) {
+  void should_ReturnOrderedResult_When_OrderByCustomFieldInSortDirectionIsSet(
+      TaskCustomField customField, SortDirection sortDirection) {
     List<TaskSummary> results =
         TASK_SERVICE.createTaskQuery().orderByCustomAttribute(customField, sortDirection).list();
 
