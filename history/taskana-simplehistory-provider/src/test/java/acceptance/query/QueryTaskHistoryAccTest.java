@@ -73,7 +73,7 @@ class QueryTaskHistoryAccTest extends AbstractAccTest {
   }
 
   @Test
-  void should_ReturnEmptyList_When_ProvidingWrongContraints() {
+  void should_ReturnEmptyList_When_ProvidingWrongConstraints() {
     List<TaskHistoryEvent> result = getHistoryService().createTaskHistoryQuery().list(1, 1000);
     assertThat(result).hasSize(12);
 
@@ -106,7 +106,7 @@ class QueryTaskHistoryAccTest extends AbstractAccTest {
 
     TaskHistoryQuery query = getHistoryService().createTaskHistoryQuery().userIdIn("peter");
 
-    assertThatThrownBy(() -> query.single()).isInstanceOf(TooManyResultsException.class);
+    assertThatThrownBy(query::single).isInstanceOf(TooManyResultsException.class);
   }
 
   @Test

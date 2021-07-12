@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -312,6 +313,35 @@ class QueryTasksAccTest extends AbstractAccTest {
     List<TaskSummary> result2 =
         TASK_SERVICE.createTaskQuery().customAttributeIn(customField, customAttributes).list();
     assertThat(result2).hasSize(expectedResult);
+
+    List<String> allCustomAttributesWithValues =
+        TASK_SERVICE.createTaskQuery().list().stream()
+            .map(t -> t.getCustomAttribute(customField))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+    // NotIn with an empty String should return all Tasks with a value in the specified customField
+    List<TaskSummary> results3 =
+        TASK_SERVICE.createTaskQuery().customAttributeNotIn(customField, "").list();
+
+    assertThat(results3)
+        .extracting(t -> t.getCustomAttribute(customField))
+        .isEqualTo(allCustomAttributesWithValues);
+
+    List<String> customAttributeList = Arrays.asList(customAttributes);
+    List<String> allCustomAttributesWithValuesExceptResult2 =
+        allCustomAttributesWithValues.stream()
+            .filter(s -> !customAttributeList.contains(s))
+            .collect(Collectors.toList());
+
+    /* NotIn with the already used customAttributes should result in all Tasks with values in the
+    specified customField, except the ones specified in customAttributes*/
+    List<TaskSummary> results4 =
+        TASK_SERVICE.createTaskQuery().customAttributeNotIn(customField, customAttributes).list();
+
+    assertThat(results4)
+        .extracting(t -> t.getCustomAttribute(customField))
+        .isEqualTo(allCustomAttributesWithValuesExceptResult2);
   }
 
   @WithAccessId(user = "admin")

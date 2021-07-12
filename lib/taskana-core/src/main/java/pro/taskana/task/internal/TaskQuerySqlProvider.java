@@ -374,6 +374,9 @@ public class TaskQuerySqlProvider {
   private static String commonWhereStatement() {
     StringBuilder sb = new StringBuilder();
     whereIn("taskIds", "t.ID", sb);
+    // vs sb.append(whereIn("taskIds", "t.ID"))
+    // vs List<Pair>.of(Pair.of("taskIds", "t.ID"),...);
+    //    list.stream().forEach(TaskQuerySqlProvider::whereIn);
     whereIn("priority", "PRIORITY", sb);
     whereIn("externalIdIn", "t.EXTERNAL_ID", sb);
     whereIn("nameIn", "t.NAME", sb);
@@ -426,8 +429,8 @@ public class TaskQuerySqlProvider {
     whereLike("attachmentClassificationIdLike", "a.CLASSIFICATION_ID", sb);
     whereLike("attachmentChannelLike", "a.CHANNEL", sb);
     whereLike("attachmentReferenceLike", "a.REF_VALUE", sb);
-    whereLike("description", "DESCRIPTION", sb); // TODO Upper vs no UPPER
-    whereCustomLikeInAndNot(sb);
+    whereLike("description", "DESCRIPTION", sb);
+    whereCustomStatements(sb);
     sb.append("<if test='isRead != null'>AND IS_READ = #{isRead}</if> ");
     sb.append("<if test='isTransferred != null'>AND IS_TRANSFERRED = #{isTransferred}</if> ");
     sb.append(
@@ -435,8 +438,8 @@ public class TaskQuerySqlProvider {
     return sb.toString();
   }
 
-  private static void whereCustomLikeInAndNot(StringBuilder sb) {
-    IntStream.range(1, 17)
+  private static void whereCustomStatements(StringBuilder sb) {
+    IntStream.rangeClosed(1, 16)
         .forEach(
             x -> {
               String collectionIn = "custom" + x + "In";
