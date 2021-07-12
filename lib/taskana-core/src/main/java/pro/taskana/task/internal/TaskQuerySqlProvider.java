@@ -13,8 +13,7 @@ public class TaskQuerySqlProvider {
     return OPENING_SCRIPT_TAG
         + "SELECT <if test=\"useDistinctKeyword\">DISTINCT</if> t.ID, t.EXTERNAL_ID, t.CREATED, t.CLAIMED, t.COMPLETED, t.MODIFIED, t.PLANNED, t.DUE, t.NAME, t.CREATOR, t.DESCRIPTION, t.NOTE, t.PRIORITY, t.STATE, t.CLASSIFICATION_KEY, "
         + "t.CLASSIFICATION_CATEGORY, t.CLASSIFICATION_ID, t.WORKBASKET_ID, t.DOMAIN, t.WORKBASKET_KEY, t.BUSINESS_PROCESS_ID, t.PARENT_BUSINESS_PROCESS_ID, t.OWNER, t.POR_COMPANY, t.POR_SYSTEM, t.POR_INSTANCE, t.POR_TYPE, "
-        + "t.POR_VALUE, t.IS_READ, t.IS_TRANSFERRED, t.CUSTOM_1, t.CUSTOM_2, t.CUSTOM_3, t.CUSTOM_4, t.CUSTOM_5, t.CUSTOM_6, t.CUSTOM_7, t.CUSTOM_8, t.CUSTOM_9, t.CUSTOM_10, t.CUSTOM_11, t.CUSTOM_12, t.CUSTOM_13, t.CUSTOM_14, "
-        + "t.CUSTOM_15, t.CUSTOM_16"
+        + "t.POR_VALUE, t.IS_READ, t.IS_TRANSFERRED, t.CUSTOM_1, t.CUSTOM_2, t.CUSTOM_3, t.CUSTOM_4, t.CUSTOM_5, t.CUSTOM_6, t.CUSTOM_7, t.CUSTOM_8, t.CUSTOM_9, t.CUSTOM_10, t.CUSTOM_11, t.CUSTOM_12, t.CUSTOM_13, t.CUSTOM_14, t.CUSTOM_15, t.CUSTOM_16"
         + "<if test=\"addAttachmentColumnsToSelectClauseForOrdering\">"
         + ", a.CLASSIFICATION_ID, a.CLASSIFICATION_KEY, a.CHANNEL, a.REF_VALUE, a.RECEIVED"
         + "</if>"
@@ -47,16 +46,9 @@ public class TaskQuerySqlProvider {
         + "ACCESS_ID IN (<foreach item='item' collection='accessIdIn' separator=',' >#{item}</foreach>) "
         + "group by WORKBASKET_ID ) AS f where max_read = 1 ) "
         + "</if> "
-        + commonWhereStatement()
+        + commonTaskWhereStatement()
         + "<if test='wildcardSearchValueLike != null and wildcardSearchFieldIn != null'>AND (<foreach item='item' collection='wildcardSearchFieldIn' separator=' OR '>UPPER(t.${item}) LIKE #{wildcardSearchValueLike}</foreach>)</if> "
-        + "<if test='objectReferences != null'>"
-        + "AND (<foreach item='item' collection='objectReferences' separator=' OR '> "
-        + "<if test='item.company != null'>t.POR_COMPANY = #{item.company} </if>"
-        + "<if test='item.system != null'> <if test='item.company != null'>AND</if> t.POR_SYSTEM = #{item.system} </if>"
-        + "<if test='item.systemInstance != null'> <if test='item.company != null or item.system != null'>AND</if> t.POR_INSTANCE = #{item.systemInstance} </if>"
-        + "<if test='item.type != null'> <if test='item.company != null or item.system != null or item.systemInstance != null'>AND</if> t.POR_TYPE = #{item.type} </if>"
-        + "<if test='item.value != null'> <if test='item.company != null or item.system != null or item.systemInstance != null or item.type != null'>AND</if> t.POR_VALUE = #{item.value} </if>"
-        + "</foreach>)</if>"
+        + commonTaskObjectReferenceWhereStatement()
         + "<if test='selectAndClaim == true'> AND t.STATE = 'READY' </if>"
         + CLOSING_WHERE_TAG
         + "<if test='!orderBy.isEmpty()'>ORDER BY <foreach item='item' collection='orderBy' separator=',' >${item}</foreach></if> "
@@ -114,15 +106,8 @@ public class TaskQuerySqlProvider {
         + "LEFT JOIN WORKBASKET AS w ON t.WORKBASKET_ID = w.ID "
         + "</if>"
         + OPENING_WHERE_TAG
-        + commonWhereStatement()
-        + "<if test='objectReferences != null'>"
-        + "AND (<foreach item='item' collection='objectReferences' separator=' OR '> "
-        + "<if test='item.company != null'>t.POR_COMPANY = #{item.company} </if>"
-        + "<if test='item.system != null'> <if test='item.company != null'>AND</if> t.POR_SYSTEM = #{item.system} </if>"
-        + "<if test='item.systemInstance != null'> <if test='item.company != null or item.system != null'>AND</if> t.POR_INSTANCE = #{item.systemInstance} </if>"
-        + "<if test='item.type != null'> <if test='item.company != null or item.system != null or item.systemInstance != null'>AND</if> t.POR_TYPE = #{item.type} </if>"
-        + "<if test='item.value != null'> <if test='item.company != null or item.system != null or item.systemInstance != null or item.type != null'>AND</if> t.POR_VALUE = #{item.value} </if>"
-        + "</foreach>)</if>"
+        + commonTaskWhereStatement()
+        + commonTaskObjectReferenceWhereStatement()
         + "<if test='wildcardSearchValueLike != null and wildcardSearchFieldIn != null'>AND (<foreach item='item' collection='wildcardSearchFieldIn' separator=' OR '>UPPER(t.${item}) LIKE #{wildcardSearchValueLike}</foreach>)</if> "
         + CLOSING_WHERE_TAG
         + "), Y (ID, EXTERNAL_ID, CREATED, CLAIMED, COMPLETED, MODIFIED, PLANNED, DUE, NAME, CREATOR, DESCRIPTION, NOTE, PRIORITY, STATE, TCLASSIFICATION_KEY, "
@@ -193,16 +178,12 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public String queryObjectReferences(ObjectReferenceQueryImpl objectReference) {
+  public static String queryObjectReferences(ObjectReferenceQueryImpl objectReference) {
     return OPENING_SCRIPT_TAG
         + "SELECT ID, COMPANY, SYSTEM, SYSTEM_INSTANCE, TYPE, VALUE "
         + "FROM OBJECT_REFERENCE "
         + OPENING_WHERE_TAG
-        + "<if test='company != null'>AND COMPANY IN(<foreach item='item' collection='company' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='system != null'>AND SYSTEM IN(<foreach item='item' collection='system' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='systemInstance != null'>AND SYSTEM_INSTANCE IN(<foreach item='item' collection='systemInstance' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='type != null'>AND TYPE IN(<foreach item='item' collection='type' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='value != null'>AND VALUE IN(<foreach item='item' collection='value' separator=',' >#{item}</foreach>)</if> "
+        + commonObjectReferenceWhereStatement()
         + CLOSING_WHERE_TAG
         + "<if test=\"_databaseId == 'db2'\">with UR </if> "
         + CLOSING_SCRIPT_TAG;
@@ -227,15 +208,8 @@ public class TaskQuerySqlProvider {
         + "ACCESS_ID IN (<foreach item='item' collection='accessIdIn' separator=',' >#{item}</foreach>) "
         + "group by WORKBASKET_ID ) AS f where max_read = 1 ) "
         + "</if> "
-        + commonWhereStatement()
-        + "<if test='objectReferences != null'>"
-        + "AND (<foreach item='item' collection='objectReferences' separator=' OR '> "
-        + "<if test='item.company != null'>t.POR_COMPANY = #{item.company} </if>"
-        + "<if test='item.system != null'> <if test='item.company != null'>AND</if> t.POR_SYSTEM = #{item.system} </if>"
-        + "<if test='item.systemInstance != null'> <if test='item.company != null or item.system != null'>AND</if> t.POR_INSTANCE = #{item.systemInstance} </if>"
-        + "<if test='item.type != null'> <if test='item.company != null or item.system != null or item.systemInstance != null'>AND</if> t.POR_TYPE = #{item.type} </if>"
-        + "<if test='item.value != null'> <if test='item.company != null or item.system != null or item.systemInstance != null or item.type != null'>AND</if> t.POR_VALUE = #{item.value} </if>"
-        + "</foreach>)</if>"
+        + commonTaskWhereStatement()
+        + commonTaskObjectReferenceWhereStatement()
         + "<if test='wildcardSearchValueLike != null and wildcardSearchFieldIn != null'>AND (<foreach item='item' collection='wildcardSearchFieldIn' separator=' OR '>UPPER(t.${item}) LIKE #{wildcardSearchValueLike}</foreach>)</if> "
         + CLOSING_WHERE_TAG
         + CLOSING_SCRIPT_TAG;
@@ -254,15 +228,8 @@ public class TaskQuerySqlProvider {
         + "LEFT JOIN CLASSIFICATION AS ac ON a.CLASSIFICATION_ID = ac.ID "
         + "</if>"
         + OPENING_WHERE_TAG
-        + commonWhereStatement()
-        + "<if test='objectReferences != null'>"
-        + "AND (<foreach item='item' collection='objectReferences' separator=' OR '> "
-        + "<if test='item.company != null'>t.POR_COMPANY = #{item.company} </if>"
-        + "<if test='item.system != null'> <if test='item.company != null'>AND</if> t.POR_SYSTEM = #{item.system} </if>"
-        + "<if test='item.systemInstance != null'> <if test='item.company != null or item.system != null'>AND</if> t.POR_INSTANCE = #{item.systemInstance} </if>"
-        + "<if test='item.type != null'> <if test='item.company != null or item.system != null or item.systemInstance != null'>AND</if> t.POR_TYPE = #{item.type} </if>"
-        + "<if test='item.value != null'> <if test='item.company != null or item.system != null or item.systemInstance != null or item.type != null'>AND</if> t.POR_VALUE = #{item.value} </if>"
-        + "</foreach>)</if>"
+        + commonTaskWhereStatement()
+        + commonTaskObjectReferenceWhereStatement()
         + "<if test='wildcardSearchValueLike != null and wildcardSearchFieldIn != null'>AND (<foreach item='item' collection='wildcardSearchFieldIn' separator=' OR '>UPPER(t.${item}) LIKE #{wildcardSearchValueLike}</foreach>)</if> "
         + CLOSING_WHERE_TAG
         + "), Y (ID, FLAG) AS "
@@ -279,21 +246,17 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public String countQueryObjectReferences(ObjectReferenceQueryImpl objectReference) {
+  public static String countQueryObjectReferences(ObjectReferenceQueryImpl objectReference) {
     return OPENING_SCRIPT_TAG
         + "SELECT COUNT(ID) FROM OBJECT_REFERENCE "
         + OPENING_WHERE_TAG
-        + "<if test='company != null'>AND COMPANY IN(<foreach item='item' collection='company' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='system != null'>AND SYSTEM IN(<foreach item='item' collection='system' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='systemInstance != null'>AND SYSTEM_INSTANCE IN(<foreach item='item' collection='systemInstance' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='type != null'>AND TYPE IN(<foreach item='item' collection='type' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='value != null'>AND VALUE IN(<foreach item='item' collection='value' separator=',' >#{item}</foreach>)</if> "
+        + commonObjectReferenceWhereStatement()
         + CLOSING_WHERE_TAG
         + "<if test=\"_databaseId == 'db2'\">with UR </if> "
         + CLOSING_SCRIPT_TAG;
   }
 
-  public String queryTaskColumnValues(TaskQueryImpl taskQuery) {
+  public static String queryTaskColumnValues(TaskQueryImpl taskQuery) {
     return OPENING_SCRIPT_TAG
         + "SELECT DISTINCT ${columnName} "
         + "FROM TASK t "
@@ -313,7 +276,7 @@ public class TaskQuerySqlProvider {
         + "ACCESS_ID IN (<foreach item='item' collection='accessIdIn' separator=',' >#{item}</foreach>) "
         + "group by WORKBASKET_ID ) where max_read = 1 ) "
         + "</if> "
-        + commonWhereStatement()
+        + commonTaskWhereStatement()
         + CLOSING_WHERE_TAG
         + "<if test='!orderBy.isEmpty()'>ORDER BY <foreach item='item' collection='orderBy' separator=',' >"
         + "<choose>"
@@ -356,24 +319,41 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public String queryObjectReferenceColumnValues(ObjectReferenceQueryImpl objectReference) {
+  public static String queryObjectReferenceColumnValues(ObjectReferenceQueryImpl objectReference) {
     return OPENING_SCRIPT_TAG
         + "SELECT DISTINCT ${columnName} "
         + "FROM OBJECT_REFERENCE "
         + OPENING_WHERE_TAG
-        + "<if test='company != null'>AND COMPANY IN(<foreach item='item' collection='company' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='system != null'>AND SYSTEM IN(<foreach item='item' collection='system' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='systemInstance != null'>AND SYSTEM_INSTANCE IN(<foreach item='item' collection='systemInstance' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='type != null'>AND TYPE IN(<foreach item='item' collection='type' separator=',' >#{item}</foreach>)</if> "
-        + "<if test='value != null'>AND VALUE IN(<foreach item='item' collection='value' separator=',' >#{item}</foreach>)</if> "
+        + commonObjectReferenceWhereStatement()
         + CLOSING_WHERE_TAG
         + "<if test=\"_databaseId == 'db2'\">with UR </if> "
         + CLOSING_SCRIPT_TAG;
   }
 
-  private static String commonWhereStatement() {
+  private static String commonTaskObjectReferenceWhereStatement() {
+    return "<if test='objectReferences != null'>"
+        + "AND (<foreach item='item' collection='objectReferences' separator=' OR '> "
+        + "<if test='item.company != null'>t.POR_COMPANY = #{item.company} </if>"
+        + "<if test='item.system != null'> <if test='item.company != null'>AND</if> t.POR_SYSTEM = #{item.system} </if>"
+        + "<if test='item.systemInstance != null'> <if test='item.company != null or item.system != null'>AND</if> t.POR_INSTANCE = #{item.systemInstance} </if>"
+        + "<if test='item.type != null'> <if test='item.company != null or item.system != null or item.systemInstance != null'>AND</if> t.POR_TYPE = #{item.type} </if>"
+        + "<if test='item.value != null'> <if test='item.company != null or item.system != null or item.systemInstance != null or item.type != null'>AND</if> t.POR_VALUE = #{item.value} </if>"
+        + "</foreach>)</if>";
+  }
+
+  private static String commonObjectReferenceWhereStatement() {
     StringBuilder sb = new StringBuilder();
-    whereIn("taskIds", "t.ID", sb);
+    whereIn("company", "COMPANY", sb);
+    whereIn("system", "SYSTEM", sb);
+    whereIn("systemInstance", "SYSTEM_INSTANCE", sb);
+    whereIn("type", "TYPE", sb);
+    whereIn("value", "VALUE", sb);
+    return sb.toString();
+  }
+
+  private static String commonTaskWhereStatement() {
+    StringBuilder sb = new StringBuilder();
+    whereIn("taskIds", "t.ID", sb); // TODO
     // vs sb.append(whereIn("taskIds", "t.ID"))
     // vs List<Pair>.of(Pair.of("taskIds", "t.ID"),...);
     //    list.stream().forEach(TaskQuerySqlProvider::whereIn);
@@ -454,6 +434,17 @@ public class TaskQuerySqlProvider {
 
   private static void whereIn(String collection, String column, StringBuilder sb) {
     sb.append("<if test='")
+        .append(collection)
+        .append(" != null'>AND ")
+        .append(column)
+        .append(" IN(<foreach item='item' collection='")
+        .append(collection)
+        .append("' separator=',' >#{item}</foreach>)</if> ");
+  }
+
+  private static StringBuilder whereIn(String collection, String column) {
+    return new StringBuilder()
+        .append("<if test='")
         .append(collection)
         .append(" != null'>AND ")
         .append(column)
