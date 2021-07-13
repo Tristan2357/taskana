@@ -166,6 +166,20 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @Test
+  void should_ReturnCorrectResults_When_QueryingForDescriptionAndPriority() {
+    List<TaskSummary> results1 = TASK_SERVICE.createTaskQuery().descriptionLike("Lorem%").list();
+    assertThat(results1).extracting(TaskSummary::getDescription).hasSize(7);
+
+    List<TaskSummary> results2 = TASK_SERVICE.createTaskQuery().priorityIn(1).list();
+    assertThat(results2).extracting(TaskSummary::getPriority).hasSize(2);
+
+    List<TaskSummary> results3 =
+        TASK_SERVICE.createTaskQuery().descriptionLike("Lorem%").priorityIn(1).list();
+    assertThat(results3).hasSize(2);
+  }
+
+  @WithAccessId(user = "admin")
+  @Test
   void testQueryForParentBusinessProcessId() {
 
     List<TaskSummary> results =
@@ -419,7 +433,7 @@ class QueryTasksAccTest extends AbstractAccTest {
 
   @WithAccessId(user = "admin")
   @Test
-  void testQueryAndCountMatch() {
+  void should_QueryAndCountMatch_When_CalledWithSameQuery() {
     TaskQuery taskQuery = TASK_SERVICE.createTaskQuery();
     List<TaskSummary> tasks = taskQuery.nameIn("Task99", "Task01", "Widerruf").list();
     long numberOfTasks = taskQuery.nameIn("Task99", "Task01", "Widerruf").count();

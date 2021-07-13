@@ -13,9 +13,6 @@ public interface QueryParameter<Q extends BaseQuery<?, ?>, R> {
   R applyToQuery(Q query);
 
   default String[] wrapElementsInLikeStatement(String[] list) {
-    if (list == null || list.length == 0) {
-      return null;
-    }
     return Arrays.stream(list).map(item -> "%" + item + "%").toArray(String[]::new);
   }
 

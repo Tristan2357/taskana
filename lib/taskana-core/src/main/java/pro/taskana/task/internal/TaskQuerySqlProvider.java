@@ -9,7 +9,9 @@ public class TaskQuerySqlProvider {
   private static final String OPENING_WHERE_TAG = "<where>";
   private static final String CLOSING_WHERE_TAG = "</where>";
 
-  public static String queryTaskSummaries(TaskQueryImpl taskQuery) {
+  private TaskQuerySqlProvider() {}
+
+  public static String queryTaskSummaries() {
     return OPENING_SCRIPT_TAG
         + "SELECT <if test=\"useDistinctKeyword\">DISTINCT</if> t.ID, t.EXTERNAL_ID, t.CREATED, t.CLAIMED, t.COMPLETED, t.MODIFIED, t.PLANNED, t.DUE, t.NAME, t.CREATOR, t.DESCRIPTION, t.NOTE, t.PRIORITY, t.STATE, t.CLASSIFICATION_KEY, "
         + "t.CLASSIFICATION_CATEGORY, t.CLASSIFICATION_ID, t.WORKBASKET_ID, t.DOMAIN, t.WORKBASKET_KEY, t.BUSINESS_PROCESS_ID, t.PARENT_BUSINESS_PROCESS_ID, t.OWNER, t.POR_COMPANY, t.POR_SYSTEM, t.POR_INSTANCE, t.POR_TYPE, "
@@ -57,7 +59,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String queryTaskSummariesDb2(TaskQueryImpl taskQuery) {
+  public static String queryTaskSummariesDb2() {
     return OPENING_SCRIPT_TAG
         + "WITH X (ID, EXTERNAL_ID, CREATED, CLAIMED, COMPLETED, MODIFIED, PLANNED, DUE, NAME, CREATOR, DESCRIPTION, NOTE, PRIORITY, STATE, TCLASSIFICATION_KEY, "
         + "CLASSIFICATION_CATEGORY, CLASSIFICATION_ID, WORKBASKET_ID, DOMAIN, WORKBASKET_KEY, BUSINESS_PROCESS_ID, PARENT_BUSINESS_PROCESS_ID, OWNER, "
@@ -178,7 +180,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String queryObjectReferences(ObjectReferenceQueryImpl objectReference) {
+  public static String queryObjectReferences() {
     return OPENING_SCRIPT_TAG
         + "SELECT ID, COMPANY, SYSTEM, SYSTEM_INSTANCE, TYPE, VALUE "
         + "FROM OBJECT_REFERENCE "
@@ -189,7 +191,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String countQueryTasks(TaskQueryImpl taskQuery) {
+  public static String countQueryTasks() {
     return OPENING_SCRIPT_TAG
         + "SELECT COUNT( <if test=\"useDistinctKeyword\">DISTINCT</if>  t.ID) FROM TASK t "
         + "<if test=\"joinWithAttachments\">"
@@ -215,7 +217,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String countQueryTasksDb2(TaskQueryImpl taskQuery) {
+  public static String countQueryTasksDb2() {
     return OPENING_SCRIPT_TAG
         + "WITH X (ID, WORKBASKET_ID) AS (SELECT <if test=\"useDistinctKeyword\">DISTINCT</if> t.ID, t.WORKBASKET_ID FROM TASK t "
         + "<if test=\"joinWithAttachments\">"
@@ -246,7 +248,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String countQueryObjectReferences(ObjectReferenceQueryImpl objectReference) {
+  public static String countQueryObjectReferences() {
     return OPENING_SCRIPT_TAG
         + "SELECT COUNT(ID) FROM OBJECT_REFERENCE "
         + OPENING_WHERE_TAG
@@ -256,7 +258,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String queryTaskColumnValues(TaskQueryImpl taskQuery) {
+  public static String queryTaskColumnValues() {
     return OPENING_SCRIPT_TAG
         + "SELECT DISTINCT ${columnName} "
         + "FROM TASK t "
@@ -319,7 +321,7 @@ public class TaskQuerySqlProvider {
         + CLOSING_SCRIPT_TAG;
   }
 
-  public static String queryObjectReferenceColumnValues(ObjectReferenceQueryImpl objectReference) {
+  public static String queryObjectReferenceColumnValues() {
     return OPENING_SCRIPT_TAG
         + "SELECT DISTINCT ${columnName} "
         + "FROM OBJECT_REFERENCE "
@@ -353,10 +355,7 @@ public class TaskQuerySqlProvider {
 
   private static String commonTaskWhereStatement() {
     StringBuilder sb = new StringBuilder();
-    whereIn("taskIds", "t.ID", sb); // TODO
-    // vs sb.append(whereIn("taskIds", "t.ID"))
-    // vs List<Pair>.of(Pair.of("taskIds", "t.ID"),...);
-    //    list.stream().forEach(TaskQuerySqlProvider::whereIn);
+    whereIn("taskIds", "t.ID", sb);
     whereIn("priority", "PRIORITY", sb);
     whereIn("externalIdIn", "t.EXTERNAL_ID", sb);
     whereIn("nameIn", "t.NAME", sb);
@@ -434,17 +433,6 @@ public class TaskQuerySqlProvider {
 
   private static void whereIn(String collection, String column, StringBuilder sb) {
     sb.append("<if test='")
-        .append(collection)
-        .append(" != null'>AND ")
-        .append(column)
-        .append(" IN(<foreach item='item' collection='")
-        .append(collection)
-        .append("' separator=',' >#{item}</foreach>)</if> ");
-  }
-
-  private static StringBuilder whereIn(String collection, String column) {
-    return new StringBuilder()
-        .append("<if test='")
         .append(collection)
         .append(" != null'>AND ")
         .append(column)
